@@ -1,7 +1,18 @@
-import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  Res,
+  Request,
+} from '@nestjs/common';
 import { QuizService } from './quiz.service';
-import { QuizStartRequest } from './dto/quiz-start.request';
-import { QuestionAnswerRequest } from './dto/question-answer.request';
+import { QuizStartRequest } from './dto/request/quiz-start.request';
+import { QuestionAnswerRequest } from './dto/request/question-answer.request';
+import { Auth } from '../auth/auth.decorator';
+import { COOKIE_KEY } from '../auth/auth.constants';
 
 @Controller('quiz')
 export class QuizController {
@@ -13,22 +24,38 @@ export class QuizController {
     @Res({ passthrough: true }) response: any,
   ) {
     const { key, firstQuestionId } = this.questionService.startQuiz(quiz.name);
-    response.cookie('userId', key, { httpOnly: true, signed: true });
+    response.cookie(COOKIE_KEY, key, { httpOnly: true, signed: true });
     return {
       firstQuestionId,
     };
   }
 
   @Get('question/:id')
-  getQuestion(@Param('id') id: string) {
-    return this.questionService.getQuestion(id);
+  @Auth()
+  getQuestion(@Param('id') id: string, @Req() request: Request) {
+    return this.questionService.getQuestion(
+      id,
+      request['signedCookies'][COOKIE_KEY],
+    );
   }
 
-  @Post('question/:id/save')
+  @Post('question/save')
+  @Auth()
   saveAnswer(
-    @Param('id') id: string,
+    @Req() request: Request,
     @Body() questionAnswerRequest: QuestionAnswerRequest,
   ) {
-    this.questionService.saveAnswer(id, questionAnswerRequest);
+    return this.questionService.saveAnswer(
+      request['signedCookies'][COOKIE_KEY],
+      questionAnswerRequest,
+    );
+  }
+
+  @Get('result')
+  @Auth()
+  getResult(@Req() request: Request) {
+    return this.questionService.calculateResult(
+      request['signedCookies'][COOKIE_KEY],
+    );
   }
 }
