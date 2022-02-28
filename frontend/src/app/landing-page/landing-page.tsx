@@ -1,8 +1,13 @@
 import { UiButton } from '@shared/ui/button/ui-button';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 export function LandingPage() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.clear();
+  });
 
   const startTestAndNavigate = async () => {
     navigate('quiz/set-name');

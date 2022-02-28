@@ -1,13 +1,29 @@
 import { Question } from '../question/question';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useQuestion } from './use-question';
+import { saveQuestion } from '../quiz.service';
 
 export function QuestionPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { id } = useParams();
+  const question = useQuestion(id as string);
+
+  if (!question) {
+    return null;
+  }
+
+  const save = async (answerId: string) => {
+    const { id } = await saveQuestion(question.id, answerId);
+    if (id) {
+      navigate(`/quiz/${id}`);
+    } else {
+      navigate(`/quiz/result`);
+    }
+  };
+
   return (
-    <div>
-      <Question />
+    <div className={'w-1/3'}>
+      <Question question={question} nextQuestion={save} />
     </div>
   );
 }

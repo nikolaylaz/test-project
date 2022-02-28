@@ -5,8 +5,10 @@ export enum ResultType {
 
 export class QuizResultResponse {
   result: ResultType;
+  name: string;
 
-  constructor(result: ResultType) {
+  constructor(result: ResultType, name: string) {
     this.result = result;
+    this.name = name;
   }
 }

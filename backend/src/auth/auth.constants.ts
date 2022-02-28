@@ -1,1 +1,1 @@
-export const COOKIE_KEY = 'userId';
+export const AUTH_HEADER = 'Authentication';

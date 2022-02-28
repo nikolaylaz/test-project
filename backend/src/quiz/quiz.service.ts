@@ -79,20 +79,25 @@ export class QuizService {
   calculateResult(userId: string) {
     const entity = this.dbService.get(userId) as QuizModel;
 
+    if (!entity) {
+      throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
+    }
+
     if (Object.keys(entity.answers).length !== questions.length) {
       throw new HttpException(
-        'Not all questions are answered',
+        'Not all questions have been answered',
         HttpStatus.BAD_REQUEST,
       );
     }
 
     let score = 0;
-    for (const questionId of entity.answers) {
+    for (const questionId in entity.answers) {
       score += this.getOptionScore(questionId, entity.answers[questionId]);
     }
 
     return new QuizResultResponse(
-      score > 10 ? ResultType.Extrovert : ResultType.Introvert,
+      score > 14 ? ResultType.Extrovert : ResultType.Introvert,
+      entity.username,
     );
   }
 
