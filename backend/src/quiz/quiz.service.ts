@@ -20,6 +20,7 @@ export class QuizService {
     const data = {
       username,
       answers: {},
+      finished: false,
     } as QuizModel;
     this.dbService.insert(key, data);
     return { key, firstQuestionId: questions[0].id };
@@ -30,6 +31,8 @@ export class QuizService {
     questionAnswerRequest: QuestionAnswerRequest,
   ): NextQuestionResponse {
     const entity = this.dbService.get(userId) as QuizModel;
+
+    this.checkFinished(entity);
 
     this.checkOptionExists(
       questionAnswerRequest.questionId,
@@ -47,6 +50,7 @@ export class QuizService {
   getQuestion(id: string, userId: string): QuestionResponse {
     const question = this.findQuestion(id);
     const entity = this.dbService.get(userId) as QuizModel;
+    this.checkFinished(entity);
     const answerId = entity.answers[question.id];
     return new QuestionResponse(question, answerId);
   }
@@ -58,22 +62,6 @@ export class QuizService {
     }
 
     return question;
-  }
-
-  checkOptionExists(questionId: string, optionId: string) {
-    const question = questions.find((q) => q.id === questionId);
-    if (!question) {
-      throw new HttpException('Missing question', HttpStatus.BAD_REQUEST);
-    }
-
-    const answer = question.options.find((q) => q.id === optionId);
-
-    if (!answer) {
-      throw new HttpException(
-        'Missing question option',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
   }
 
   calculateResult(userId: string) {
@@ -95,6 +83,9 @@ export class QuizService {
       score += this.getOptionScore(questionId, entity.answers[questionId]);
     }
 
+    entity.finished = true;
+    this.dbService.update(userId, entity);
+
     return new QuizResultResponse(
       score > 14 ? ResultType.Extrovert : ResultType.Introvert,
       entity.username,
@@ -113,6 +104,28 @@ export class QuizService {
       return questions[questionIndex + 1].id;
     } else {
       return null;
+    }
+  }
+
+  private checkFinished(quiz: QuizModel) {
+    if (quiz.finished) {
+      throw new HttpException('Quiz already finished', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  private checkOptionExists(questionId: string, optionId: string) {
+    const question = questions.find((q) => q.id === questionId);
+    if (!question) {
+      throw new HttpException('Missing question', HttpStatus.BAD_REQUEST);
+    }
+
+    const answer = question.options.find((q) => q.id === optionId);
+
+    if (!answer) {
+      throw new HttpException(
+        'Missing question option',
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 }
