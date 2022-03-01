@@ -16,7 +16,7 @@ export function Question({ question, nextQuestion }: QuestionProps) {
 
   useEffect(() => {
     setValue(question.answerId);
-  }, [question.answerId]);
+  }, [question]);
 
   const onChangeValue = (e: any) => {
     setValue(e.target.value);
